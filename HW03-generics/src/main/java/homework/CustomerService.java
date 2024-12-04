@@ -26,13 +26,6 @@ public class CustomerService {
         }
         var customer = entry.getKey();
 
-        return Map.entry(
-                new Customer(
-                        customer.getId(),
-                        customer.getName(),
-                        customer.getScores()
-                ),
-                entry.getValue()
-        );
+        return Map.entry(new Customer(customer.getId(), customer.getName(), customer.getScores()), entry.getValue());
     }
 }
