@@ -1,4 +1,8 @@
+import com.diffplug.gradle.spotless.SpotlessExtension
+import com.diffplug.gradle.spotless.SpotlessPlugin
 import io.spring.gradle.dependencymanagement.dsl.DependencyManagementExtension
+import name.remal.gradle_plugins.sonarlint.SonarLintExtension
+import name.remal.gradle_plugins.sonarlint.SonarLintPlugin
 import org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES
 import org.gradle.plugins.ide.idea.model.IdeaLanguageLevel
 
@@ -6,6 +10,8 @@ plugins {
     idea
     id("io.spring.dependency-management")
     id("org.springframework.boot") apply false
+    id("name.remal.sonarlint") apply false
+    id("com.diffplug.spotless") apply false
 }
 
 idea {
@@ -54,6 +60,21 @@ subprojects {
     tasks.withType<JavaCompile> {
         options.encoding = "UTF-8"
         options.compilerArgs.addAll(listOf("-Xlint:all,-serial,-processing"))
+    }
+
+    apply<SonarLintPlugin>()
+    configure<SonarLintExtension> {
+        nodeJs {
+            detectNodeJs = false
+            logNodeJsNotFound = false
+        }
+    }
+
+    apply<SpotlessPlugin>()
+    configure<SpotlessExtension> {
+        java {
+            palantirJavaFormat("2.39.0")
+        }
     }
 
     tasks.withType<Test> {
