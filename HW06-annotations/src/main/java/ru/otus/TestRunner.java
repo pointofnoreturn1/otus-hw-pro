@@ -11,38 +11,53 @@ import ru.otus.annotations.Before;
 import ru.otus.annotations.Test;
 import ru.otus.util.ReflectionHelper;
 
+@SuppressWarnings("java:S2629")
 public class TestRunner {
     private static final Logger log = LoggerFactory.getLogger(TestRunner.class);
 
     private TestRunner() {}
 
     public static void run(Class<?> cl) {
-        List<Method> beforeMethods = getBeforeMethods(cl.getMethods());
-        List<Method> afterMethods = getAfterMethods(cl.getMethods());
         List<Method> testMethods = getTestMethods(cl.getMethods());
-
         int failed = 0;
         for (Method testMethod : testMethods) {
             Object testInstance = ReflectionHelper.instantiate(cl);
-            beforeMethods.forEach(it -> ReflectionHelper.callMethod(testInstance, it.getName()));
+            String methodName = testMethod.getName();
+            processBeforeOrAfterMethods(testInstance, getBeforeMethods(cl.getMethods()));
             try {
-                ReflectionHelper.callMethod(testInstance, testMethod.getName());
-                log.info("{} is OK", testMethod.getName());
+                ReflectionHelper.callMethod(testInstance, methodName);
             } catch (Exception e) {
-                if (e.getCause() instanceof InvocationTargetException invocationTargetException)
-                    log.error(
-                            "{} failed: {}",
-                            testMethod.getName(),
-                            invocationTargetException.getTargetException().toString());
-                else {
-                    log.error("{} failed: {}", testMethod.getName(), e.toString());
-                }
+                logError(testMethod, e);
                 failed++;
             }
-            afterMethods.forEach(it -> ReflectionHelper.callMethod(testInstance, it.getName()));
+            processBeforeOrAfterMethods(testInstance, getAfterMethods(cl.getMethods()));
+
+            log.info("{} is OK", methodName);
         }
 
         log.info("Tests run: {}. Passed: {}. Failed: {}", testMethods.size(), testMethods.size() - failed, failed);
+    }
+
+    private static void processBeforeOrAfterMethods(Object testInstance, List<Method> methods) {
+        methods.forEach(it -> {
+            try {
+                ReflectionHelper.callMethod(testInstance, it.getName());
+            } catch (Exception e) {
+                logError(it, e);
+                System.exit(255);
+            }
+        });
+    }
+
+    private static void logError(Method method, Exception e) {
+        if (e.getCause() instanceof InvocationTargetException invocationTargetException)
+            log.info(
+                    "ERROR! {} failed: {}",
+                    method.getName(),
+                    invocationTargetException.getTargetException().toString());
+        else {
+            log.info("ERROR! {} failed: {}", method.getName(), e.toString());
+        }
     }
 
     private static List<Method> getBeforeMethods(Method[] methods) {

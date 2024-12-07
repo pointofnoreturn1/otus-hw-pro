@@ -8,14 +8,14 @@ import ru.otus.annotations.Test;
 public class MyTests {
 
     @Before
-    public static void before() {
+    public void beforeEach() {
         for (int i = 0; i < 10; i++) {
             i = i + 1;
         }
     }
 
     @After
-    public static void after() {
+    public void afterEach() {
         for (int i = 0; i < 10; i++) {
             i = i + 1;
         }
