@@ -4,8 +4,8 @@ import static ru.otus.util.ReflectionHelper.callMethod;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
+import java.util.function.Predicate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.otus.annotations.After;
@@ -13,66 +13,67 @@ import ru.otus.annotations.Before;
 import ru.otus.annotations.Test;
 import ru.otus.util.ReflectionHelper;
 
-@SuppressWarnings("java:S135")
 public class TestRunner {
     private static final Logger log = LoggerFactory.getLogger(TestRunner.class);
 
     private TestRunner() {}
 
     public static void run(Class<?> cl) {
-        Method[] methods = cl.getMethods();
-        List<Method> testMethods = getTestMethods(methods);
-        int failedTests = 0;
-        for (Method testMethod : testMethods) {
+        Method[] classMethods = cl.getMethods();
+        Map<Method, LinkedHashSet<Exception>> testMethods = new HashMap<>();
+
+        for (Method testMethod : getTestMethods(classMethods)) {
+            testMethods.put(testMethod, new LinkedHashSet<>());
             Object testInstance = ReflectionHelper.instantiate(cl);
-            String testMethodName = testMethod.getName();
 
-            boolean beforeFailed = processBeforeOrAfterMethods(testInstance, testMethodName, getBeforeMethods(methods));
-            if (beforeFailed) {
-                failedTests++;
+            getBeforeMethods(classMethods)
+                    .forEach(it -> processMethod(testInstance, it.getName(), testMethod, testMethods));
+
+            var exceptions = testMethods.get(testMethod);
+            if (!exceptions.isEmpty()) {
                 continue;
             }
 
-            try {
-                callMethod(testInstance, testMethodName);
-            } catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
-                log.info("ERROR! {} failed: {}", testMethodName, e.getCause().toString());
-                failedTests++;
-                continue;
-            }
+            processMethod(testInstance, testMethod.getName(), testMethod, testMethods);
 
-            boolean afterFailed = processBeforeOrAfterMethods(testInstance, testMethodName, getAfterMethods(methods));
-            if (afterFailed) {
-                failedTests++;
-                continue;
-            }
-
-            log.info("{} is OK", testMethodName);
+            getAfterMethods(classMethods)
+                    .forEach(it -> processMethod(testInstance, it.getName(), testMethod, testMethods));
         }
 
-        log.info(
-                "Tests run: {}. Passed: {}. Failed: {}",
-                testMethods.size(),
-                testMethods.size() - failedTests,
-                failedTests);
+        printTestsResults(testMethods);
+        int failed = countFailed(testMethods);
+        log.info("Tests run: {}. Passed: {}. Failed: {}", testMethods.size(), testMethods.size() - failed, failed);
     }
 
-    private static boolean processBeforeOrAfterMethods(
-            Object testInstance, String testMethodName, List<Method> methods) {
-        for (Method method : methods) {
-            try {
-                callMethod(testInstance, method.getName());
-            } catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
-                log.info(
-                        "ERROR! {} failed, error occurred in {}: {}",
-                        testMethodName,
-                        method.getName(),
-                        e.getCause().toString());
-                return true;
+    private static void processMethod(
+            Object testInstance,
+            String methodName,
+            Method testMethod,
+            Map<Method, LinkedHashSet<Exception>> testMethods) {
+        try {
+            callMethod(testInstance, methodName);
+        } catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
+            var exceptions = testMethods.get(testMethod);
+            exceptions.add(e);
+        }
+    }
+
+    private static void printTestsResults(Map<Method, LinkedHashSet<Exception>> testMethods) {
+        for (Map.Entry<Method, LinkedHashSet<Exception>> entry : testMethods.entrySet()) {
+            String methodName = entry.getKey().getName();
+            if (entry.getValue().isEmpty()) {
+                log.info("{} is OK", methodName);
+            } else {
+                String exception = entry.getValue().getLast().getCause().toString();
+                log.info("ERROR! {} failed: {}", methodName, exception);
             }
         }
+    }
 
-        return false;
+    private static int countFailed(Map<Method, LinkedHashSet<Exception>> testMethods) {
+        return (int) testMethods.values().stream()
+                .filter(Predicate.not(HashSet::isEmpty))
+                .count();
     }
 
     private static List<Method> getBeforeMethods(Method[] methods) {
