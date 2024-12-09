@@ -28,17 +28,24 @@ public class TestRunner {
             String testMethodName = testMethod.getName();
 
             boolean beforeFailed = processBeforeOrAfterMethods(testInstance, testMethodName, getBeforeMethods(methods));
-            if (beforeFailed) continue;
+            if (beforeFailed) {
+                failedTests++;
+                continue;
+            }
 
             try {
                 callMethod(testInstance, testMethodName);
             } catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
                 log.info("ERROR! {} failed: {}", testMethodName, e.getCause().toString());
                 failedTests++;
+                continue;
             }
 
             boolean afterFailed = processBeforeOrAfterMethods(testInstance, testMethodName, getAfterMethods(methods));
-            if (afterFailed) continue;
+            if (afterFailed) {
+                failedTests++;
+                continue;
+            }
 
             log.info("{} is OK", testMethodName);
         }
