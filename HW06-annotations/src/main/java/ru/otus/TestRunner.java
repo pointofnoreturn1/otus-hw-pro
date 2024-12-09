@@ -1,5 +1,7 @@
 package ru.otus;
 
+import static ru.otus.util.ReflectionHelper.callMethod;
+
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -11,53 +13,59 @@ import ru.otus.annotations.Before;
 import ru.otus.annotations.Test;
 import ru.otus.util.ReflectionHelper;
 
-@SuppressWarnings("java:S2629")
+@SuppressWarnings("java:S135")
 public class TestRunner {
     private static final Logger log = LoggerFactory.getLogger(TestRunner.class);
 
     private TestRunner() {}
 
     public static void run(Class<?> cl) {
-        List<Method> testMethods = getTestMethods(cl.getMethods());
-        int failed = 0;
+        Method[] methods = cl.getMethods();
+        List<Method> testMethods = getTestMethods(methods);
+        int failedTests = 0;
         for (Method testMethod : testMethods) {
             Object testInstance = ReflectionHelper.instantiate(cl);
-            String methodName = testMethod.getName();
-            processBeforeOrAfterMethods(testInstance, getBeforeMethods(cl.getMethods()));
-            try {
-                ReflectionHelper.callMethod(testInstance, methodName);
-            } catch (Exception e) {
-                logError(testMethod, e);
-                failed++;
-            }
-            processBeforeOrAfterMethods(testInstance, getAfterMethods(cl.getMethods()));
+            String testMethodName = testMethod.getName();
 
-            log.info("{} is OK", methodName);
+            boolean beforeFailed = processBeforeOrAfterMethods(testInstance, testMethodName, getBeforeMethods(methods));
+            if (beforeFailed) continue;
+
+            try {
+                callMethod(testInstance, testMethodName);
+            } catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
+                log.info("ERROR! {} failed: {}", testMethodName, e.getCause().toString());
+                failedTests++;
+            }
+
+            boolean afterFailed = processBeforeOrAfterMethods(testInstance, testMethodName, getAfterMethods(methods));
+            if (afterFailed) continue;
+
+            log.info("{} is OK", testMethodName);
         }
 
-        log.info("Tests run: {}. Passed: {}. Failed: {}", testMethods.size(), testMethods.size() - failed, failed);
+        log.info(
+                "Tests run: {}. Passed: {}. Failed: {}",
+                testMethods.size(),
+                testMethods.size() - failedTests,
+                failedTests);
     }
 
-    private static void processBeforeOrAfterMethods(Object testInstance, List<Method> methods) {
-        methods.forEach(it -> {
+    private static boolean processBeforeOrAfterMethods(
+            Object testInstance, String testMethodName, List<Method> methods) {
+        for (Method method : methods) {
             try {
-                ReflectionHelper.callMethod(testInstance, it.getName());
-            } catch (Exception e) {
-                logError(it, e);
-                System.exit(255);
+                callMethod(testInstance, method.getName());
+            } catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
+                log.info(
+                        "ERROR! {} failed, error occurred in {}: {}",
+                        testMethodName,
+                        method.getName(),
+                        e.getCause().toString());
+                return true;
             }
-        });
-    }
-
-    private static void logError(Method method, Exception e) {
-        if (e.getCause() instanceof InvocationTargetException invocationTargetException)
-            log.info(
-                    "ERROR! {} failed: {}",
-                    method.getName(),
-                    invocationTargetException.getTargetException().toString());
-        else {
-            log.info("ERROR! {} failed: {}", method.getName(), e.toString());
         }
+
+        return false;
     }
 
     private static List<Method> getBeforeMethods(Method[] methods) {

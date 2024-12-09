@@ -39,4 +39,11 @@ public class MyTests {
             i = i + 1;
         }
     }
+
+    @Test
+    public void positiveTest3() {
+        for (int i = 0; i < 10; i++) {
+            i = i + 1;
+        }
+    }
 }

@@ -1,19 +1,17 @@
 package ru.otus.util;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 
 @SuppressWarnings({"java:S3011", "java:S112"})
 public class ReflectionHelper {
     private ReflectionHelper() {}
 
-    public static Object callMethod(Object object, String name, Object... args) {
-        try {
-            var method = object.getClass().getDeclaredMethod(name, toClasses(args));
-            method.setAccessible(true);
-            return method.invoke(object, args);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+    public static Object callMethod(Object object, String name, Object... args)
+            throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        var method = object.getClass().getDeclaredMethod(name, toClasses(args));
+        method.setAccessible(true);
+        return method.invoke(object, args);
     }
 
     public static <T> T instantiate(Class<T> type, Object... args) {
