@@ -3,6 +3,7 @@ include("HW01-gradle")
 include("HW03-generics")
 include("HW06-annotations")
 include("HW08-gc:homework")
+include("HW10-byteCodes")
 
 pluginManagement {
     val jgitver: String by settings
