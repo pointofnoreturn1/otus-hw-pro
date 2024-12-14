@@ -9,7 +9,13 @@ public class TestLogging implements TestLoggingInterface {
 
     @Override
     @Log
-    public void calculation(int p1, int p2) {
+    public void calculation(int param1, int param2) {
+        // left empty intentionally
+    }
+
+    @Override
+    @Log
+    public void calculation(double param1, int param2) {
         // left empty intentionally
     }
 }

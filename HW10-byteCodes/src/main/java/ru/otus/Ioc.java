@@ -3,9 +3,7 @@ package ru.otus;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,23 +19,48 @@ public class Ioc {
     }
 
     private static class LogInvocationHandler implements InvocationHandler {
-        private final TestLoggingInterface target;
-        private final Map<String, Method> methods = new HashMap<>();
+        private final Object target;
+        private final Map<String, List<Method>> methods = new HashMap<>();
 
-        public LogInvocationHandler(TestLoggingInterface target) {
+        public LogInvocationHandler(Object target) {
             this.target = target;
             for (Method method : target.getClass().getDeclaredMethods()) {
-                this.methods.put(method.getName(), method);
+                this.methods.computeIfAbsent(method.getName(), k -> new ArrayList<>());
+                this.methods.get(method.getName()).add(method);
             }
         }
 
         @Override
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-            if (methods.get(method.getName()).isAnnotationPresent(Log.class)) {
+            Optional<Method> targetMethod = methods.get(method.getName()).stream()
+                    .filter(LogInvocationHandler::hasAnnotation)
+                    .filter(it -> haveSameSignature(it, method))
+                    .findFirst();
+
+            if (targetMethod.isPresent()) {
                 String strArgs = Arrays.toString(args).replace("[", "").replace("]", "");
                 log.info("Executed method: {}, param: {}", method.getName(), strArgs);
             }
+
             return method.invoke(target, args);
+        }
+
+        private static boolean hasAnnotation(Method method) {
+            return method.isAnnotationPresent(Log.class);
+        }
+
+        private static boolean haveSameSignature(Method m1, Method m2) {
+            if (m1.getParameterCount() != m2.getParameterCount()) {
+                return false;
+            }
+
+            for (int i = 0; i < m1.getParameterCount(); i++) {
+                if (!m1.getParameterTypes()[i].equals(m2.getParameterTypes()[i])) {
+                    return false;
+                }
+            }
+
+            return true;
         }
     }
 }

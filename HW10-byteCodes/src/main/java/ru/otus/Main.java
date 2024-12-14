@@ -2,7 +2,9 @@ package ru.otus;
 
 public class Main {
     public static void main(String[] args) {
-        Ioc.createTestLogging().calculation(42);
-        Ioc.createTestLogging().calculation(42, 43);
+        TestLoggingInterface instance = Ioc.createTestLogging();
+        instance.calculation(42);
+        instance.calculation(42, 43);
+        instance.calculation(44.0, 45);
     }
 }
