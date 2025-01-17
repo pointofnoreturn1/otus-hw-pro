@@ -1,22 +1,21 @@
 package ru.otus.cassette;
 
-import ru.otus.banknote.Banknote;
-import ru.otus.banknote.Denomination;
+import ru.otus.denomination.Denomination;
 
 public class CassetteImpl implements Cassette {
-    private final Banknote banknote;
-    private final int initialCapacity;
+    private final Denomination denomination;
+    private final int capacity;
     private int banknotesAmount;
 
-    public CassetteImpl(Banknote banknote, int initialCapacity, int banknotesAmount) {
-        this.banknote = banknote;
-        this.initialCapacity = initialCapacity;
+    public CassetteImpl(Denomination denomination, int capacity, int banknotesAmount) {
+        this.denomination = denomination;
+        this.capacity = capacity;
         this.banknotesAmount = banknotesAmount;
     }
 
     @Override
     public Denomination getDenomination() {
-        return banknote.denomination();
+        return denomination;
     }
 
     @Override
@@ -36,11 +35,11 @@ public class CassetteImpl implements Cassette {
 
     @Override
     public boolean hasFreeSpace() {
-        return banknotesAmount < initialCapacity;
+        return banknotesAmount < capacity;
     }
 
     @Override
     public long getBalance() {
-        return (long) banknotesAmount * banknote.denomination().intValue();
+        return (long) banknotesAmount * denomination.intValue();
     }
 }

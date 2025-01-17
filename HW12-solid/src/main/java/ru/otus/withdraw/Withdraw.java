@@ -1,8 +1,7 @@
 package ru.otus.withdraw;
 
-import java.util.List;
-import ru.otus.cassette.Cassette;
+import ru.otus.ATM;
 
 public interface Withdraw {
-    void withdraw(int amount, List<? extends Cassette> cassettes);
+    void withdraw(int amount, ATM atm);
 }

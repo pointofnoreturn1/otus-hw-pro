@@ -1,4 +1,4 @@
-package ru.otus.banknote;
+package ru.otus.denomination;
 
 public enum Denomination {
     HUNDRED(100),

@@ -1,6 +1,6 @@
 package ru.otus.cassette;
 
-import ru.otus.banknote.Denomination;
+import ru.otus.denomination.Denomination;
 
 public interface Cassette {
     Denomination getDenomination();
