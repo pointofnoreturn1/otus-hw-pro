@@ -7,6 +7,7 @@ include("HW08-gc:homework")
 include("HW10-byteCodes")
 include("HW12-solid")
 include("HW15-structuralPatterns")
+include("HW16-io")
 
 pluginManagement {
     val jgitver: String by settings
