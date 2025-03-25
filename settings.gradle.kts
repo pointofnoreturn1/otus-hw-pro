@@ -11,6 +11,7 @@ include("HW16-io")
 include("HW18-jdbc:homework")
 include("HW21-jpql:homework")
 include("HW22-cache")
+include("HW24-webServer")
 include("HW25-di")
 
 pluginManagement {
