@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <title>Clients</title>
+</head>
+<body>
+
+<h2>Clients</h2>
+
+<div th:if="${clients.isEmpty()}">
+    <p>No clients</p>
+</div>
+
+<div th:unless="${clients.isEmpty()}">
+    <table>
+        <thead>
+        <tr>
+            <th>id</th>
+            <th>name</th>
+            <th>address</th>
+            <th>phones</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="client : ${clients}">
+            <td th:text="${client.id}"></td>
+            <td th:text="${client.name}"></td>
+            <td th:text="${client.address != null ? client.address.street : 'No address'}"></td>
+            <td th:text="${client.phones.isEmpty() ?  'No phone numbers' : client.getStringPhones()}"></td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+<h2>Create new client</h2>
+
+<form th:method="POST" th:action="@{/api/clients}">
+    <input type="hidden" th:value="${client.id}"/>
+
+    <label for="name">Enter name:</label>
+    <input th:type="text" th:value="${client.name}" id="name" name="name">
+    <br/>
+
+    <label for="address">Enter address:</label>
+    <input th:type="text" th:value="${address.street}" id="address" name="street">
+    <br/>
+
+    <label for="phone">Enter phone:</label>
+    <input th:type="text" th:value="${phone.number}" id="phone" name="number">
+    <br/>
+
+    <div>
+        <button type="submit">Save</button>
+    </div>
+</form>
+
+</body>
+</html>
