@@ -14,7 +14,7 @@ import ru.otus.model.Phone;
 import ru.otus.service.ClientService;
 
 @Controller
-@RequestMapping("/api/clients")
+@RequestMapping("/clients")
 public class ClientController {
     private final ClientService clientService;
 
@@ -42,6 +42,6 @@ public class ClientController {
         client.setPhones(Set.of(phone));
         clientService.saveClient(client);
 
-        return "redirect:/api/clients";
+        return "redirect:/clients";
     }
 }
