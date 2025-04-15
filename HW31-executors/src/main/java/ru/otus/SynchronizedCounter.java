@@ -18,8 +18,8 @@ public class SynchronizedCounter {
 
     public static void main(String[] args) {
         var counter = new SynchronizedCounter(1, 10);
-        new Thread(() -> counter.count(counter.initValue)).start();
-        new Thread(() -> counter.count(counter.initValue)).start();
+        new Thread(() -> counter.count(counter.initValue), "Thread-0").start();
+        new Thread(() -> counter.count(counter.initValue), "Thread-1").start();
     }
 
     private synchronized void count(int idx) {
