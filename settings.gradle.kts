@@ -16,6 +16,7 @@ include("HW25-di")
 include("HW28-springDataJdbc")
 include("HW31-executors")
 include("HW32-concurrentCollections")
+include("HW34-multiprocess")
 
 pluginManagement {
     val jgitver: String by settings
