@@ -26,7 +26,7 @@ public class ClientStreamObserver implements StreamObserver<NumberResponse> {
         logger.info("request completed");
     }
 
-    public synchronized int getCurrentValue() {
+    public synchronized int getCurrentValueAndReset() {
         var pervValue = this.currentValue;
         this.currentValue = 0;
 

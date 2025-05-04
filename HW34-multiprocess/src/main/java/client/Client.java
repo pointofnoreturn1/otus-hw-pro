@@ -53,7 +53,7 @@ public class Client {
                 executor.shutdown();
             }
 
-            var value = currentValue.getAndIncrement() + responseStreamObserver.getCurrentValue() + 1;
+            var value = currentValue.getAndIncrement() + responseStreamObserver.getCurrentValueAndReset() + 1;
             currentValue.set(value);
             logger.info("currentValue:{}", value);
         };
