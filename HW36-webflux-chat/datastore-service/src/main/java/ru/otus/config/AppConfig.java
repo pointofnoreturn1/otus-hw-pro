@@ -1,4 +1,4 @@
-package ru.petrelevich.config;
+package ru.otus.config;
 
 import io.netty.channel.nio.NioEventLoopGroup;
 import java.util.concurrent.ThreadFactory;
@@ -12,7 +12,7 @@ import reactor.core.scheduler.Schedulers;
 import reactor.util.annotation.Nullable;
 
 @Configuration
-public class ApplConfig {
+public class AppConfig {
     private static final int THREAD_POOL_SIZE = 2;
 
     @Bean(destroyMethod = "close")

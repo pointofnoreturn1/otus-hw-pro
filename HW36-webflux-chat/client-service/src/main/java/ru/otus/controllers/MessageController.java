@@ -1,4 +1,4 @@
-package ru.petrelevich.controllers;
+package ru.otus.controllers;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,13 +15,14 @@ import org.springframework.web.socket.messaging.SessionSubscribeEvent;
 import org.springframework.web.util.HtmlUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import ru.petrelevich.domain.Message;
+import ru.otus.domain.Message;
 
 @Controller
 public class MessageController {
     private static final Logger logger = LoggerFactory.getLogger(MessageController.class);
 
     private static final String TOPIC_TEMPLATE = "/topic/response.";
+    private static final String ROOM_1408 = "1408";
 
     private final WebClient datastoreClient;
     private final SimpMessagingTemplate template;
@@ -33,11 +34,17 @@ public class MessageController {
 
     @MessageMapping("/message.{roomId}")
     public void getMessage(@DestinationVariable("roomId") String roomId, Message message) {
+        if (roomId.equals(ROOM_1408)) return;
+
         logger.info("get message:{}, roomId:{}", message, roomId);
         saveMessage(roomId, message).subscribe(msgId -> logger.info("message send id:{}", msgId));
 
         template.convertAndSend(
                 String.format("%s%s", TOPIC_TEMPLATE, roomId), new Message(HtmlUtils.htmlEscape(message.messageStr())));
+
+        template.convertAndSend(
+                String.format("%s%s", TOPIC_TEMPLATE, ROOM_1408),
+                new Message(HtmlUtils.htmlEscape(message.messageStr())));
     }
 
     @EventListener
@@ -48,20 +55,15 @@ public class MessageController {
             logger.error("Can not get simpDestination header, headers:{}", genericMessage.getHeaders());
             throw new ChatException("Can not get simpDestination header");
         }
-        if (!simpDestination.startsWith(TOPIC_TEMPLATE)) {
+        if (!simpDestination.startsWith(template.getUserDestinationPrefix())) {
             return;
         }
         var roomId = parseRoomId(simpDestination);
+        logger.info("subscription for:{}, roomId:{}", simpDestination, roomId);
 
-        var principal = event.getUser();
-        if (principal == null) {
-            return;
-        }
-        logger.info("subscription for:{}, roomId:{}, user:{}", simpDestination, roomId, principal.getName());
-        // /user/f6532733-51db-4d0e-bd00-1267dddc7b21/topic/response.1
         getMessagesByRoomId(roomId)
                 .doOnError(ex -> logger.error("getting messages for roomId:{} failed", roomId, ex))
-                .subscribe(message -> template.convertAndSendToUser(principal.getName(), simpDestination, message));
+                .subscribe(message -> template.convertAndSend(simpDestination, message));
     }
 
     private long parseRoomId(String simpDestination) {
@@ -86,7 +88,7 @@ public class MessageController {
     private Flux<Message> getMessagesByRoomId(long roomId) {
         return datastoreClient
                 .get()
-                .uri(String.format("/msg/%s", roomId))
+                .uri(roomId == 1408 ? "/msg/all" : String.format("/msg/%s", roomId))
                 .accept(MediaType.APPLICATION_NDJSON)
                 .exchangeToFlux(response -> {
                     if (response.statusCode().equals(HttpStatus.OK)) {
