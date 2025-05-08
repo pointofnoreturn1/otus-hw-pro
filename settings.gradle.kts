@@ -17,6 +17,9 @@ include("HW28-springDataJdbc")
 include("HW31-executors")
 include("HW32-concurrentCollections")
 include("HW34-multiprocess")
+include("HW36-webflux-chat")
+include("HW36-webflux-chat:client-service")
+include("HW36-webflux-chat:datastore-service")
 
 pluginManagement {
     val jgitver: String by settings
